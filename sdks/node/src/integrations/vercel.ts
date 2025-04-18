@@ -11,6 +11,7 @@ function makeDoStreamOp(originalFn: any) {
       return result.stream;
     }
     const weaveOp = op(doStream, {
+      parameterNames: 'useParam0Object',
       streamReducer: {
         // TODO: is this the shape of the result that we want?
         initialState: {
@@ -65,7 +66,7 @@ function makeLanguageModelProxy(targetVal: any) {
     get(target, p, receiver) {
       const targetVal = Reflect.get(target, p, receiver);
       if (p === 'doGenerate') {
-        return op(targetVal.bind(target));
+        return op(targetVal.bind(target), {parameterNames: 'useParam0Object'});
       } else if (p === 'doStream') {
         return makeDoStreamOp(targetVal.bind(target));
       }
@@ -80,17 +81,6 @@ export function wrapAIProvider(provider: ProviderV1) {
     apply(target, thisArg, argArray) {
       const targetVal = Reflect.apply(target, thisArg, argArray);
       return makeLanguageModelProxy(targetVal);
-    },
-
-    get(target, p, receiver) {
-      const targetVal = Reflect.get(target, p, receiver);
-      if (p === 'doGenerate') {
-        return op(targetVal);
-      } else if (p === 'doStream') {
-        return makeDoStreamOp(targetVal);
-      }
-
-      return targetVal;
     },
   });
 
