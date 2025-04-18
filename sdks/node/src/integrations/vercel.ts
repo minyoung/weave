@@ -1,7 +1,21 @@
 import {ProviderV1} from '@ai-sdk/provider';
 import {convertAsyncIteratorToReadableStream} from '@ai-sdk/provider-utils';
+import {type LanguageModelV1Middleware} from 'ai';
 
 import {op} from '../op';
+
+export const weaveLanguageModelMiddleware: LanguageModelV1Middleware = {
+  wrapGenerate: async ({doGenerate}) => {
+    return op(doGenerate, {
+      parameterNames: 'useParam0Object',
+      // @ts-expect-error doGenerate does not accept args, but we want to pass args to it for weave.op to capture
+    })(params);
+  },
+
+  wrapStream: async ({doStream, params}) => {
+    return makeDoStreamOp(doStream)(params);
+  },
+};
 
 function makeDoStreamOp(originalFn: any) {
   async function wrapped(...args: Parameters<typeof originalFn>) {
